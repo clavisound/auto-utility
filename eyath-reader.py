@@ -101,7 +101,7 @@ if __name__ == "__main__":
             # Get system temp directory
             temp_dir = tempfile.gettempdir()
             # Construct path for 'dei' folder inside temp directory
-            dei_folder = os.path.join(temp_dir, 'dei')
+            dei_folder = os.path.join(temp_dir, 'eyath')
             # Create 'dei' folder if it doesn't exist
             os.makedirs(dei_folder, exist_ok=True)
 
