@@ -101,12 +101,12 @@ if __name__ == "__main__":
             # Get system temp directory
             temp_dir = tempfile.gettempdir()
             # Construct path for 'dei' folder inside temp directory
-            dei_folder = os.path.join(temp_dir, 'eyath')
+            eyath_folder = os.path.join(temp_dir, 'eyath')
             # Create 'dei' folder if it doesn't exist
-            os.makedirs(dei_folder, exist_ok=True)
+            os.makedirs(eyath_folder, exist_ok=True)
 
             # Create a temporary file inside the 'dei' folder
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=dei_folder) as temp_pdf:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=eyath_folder) as temp_pdf:
                 temp_pdf.write(part.get_payload(decode=True))
                 temp_pdf_path = temp_pdf.name
 
