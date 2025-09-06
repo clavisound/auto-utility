@@ -16,7 +16,7 @@ def extract_data_from_pdf(pdf_path):
     # Convert to one-liner and replace newlines with tabs
     one_liner_text = text.replace('\n', '\t')
 
-    print("One-liner text:\n", one_liner_text)
+    # print("One-liner text:\n", one_liner_text)
 
     data = {}
 
