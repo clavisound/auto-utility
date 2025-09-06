@@ -3,6 +3,9 @@ import sys
 import re
 import json
 from pypdf import PdfReader
+import email
+import os
+import tempfile
 
 def extract_data_from_pdf(pdf_path):
     reader = PdfReader(pdf_path)
@@ -66,14 +69,57 @@ def extract_data_from_pdf(pdf_path):
     return json.dumps(data, indent=4, ensure_ascii=False)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python3 eyath-reader.py <pdf_file_path>")
-        sys.exit(1)
+    input_source = None
+    if len(sys.argv) < 2 or sys.argv[1] == '-':
+        # Read from stdin
+        input_source = sys.stdin.buffer # Use buffer for binary read
+        print("Reading email from stdin...", file=sys.stderr)
+    else:
+        # Read from file specified as argument
+        pdf_file_path = sys.argv[1]
+        print(f"Processing PDF from file: {pdf_file_path}", file=sys.stderr)
+        try:
+            extracted_json = extract_data_from_pdf(pdf_file_path)
+            print(extracted_json)
+        except Exception as e:
+            print(f"An error occurred while processing file {pdf_file_path}: {e}", file=sys.stderr)
+            sys.exit(1)
+        sys.exit(0) # Exit after processing the file
 
-    pdf_file_path = sys.argv[1]
-    try:
-        extracted_json = extract_data_from_pdf(pdf_file_path)
-        print(extracted_json)
-    except Exception as e:
-        print(f"An error occurred: {e}", file=sys.stderr)
+    # If we are here, it means we are processing from stdin
+    raw_email = input_source.read()
+    msg = email.message_from_bytes(raw_email)
+
+    pdf_found = False
+    for part in msg.walk():
+        if part.get_content_maintype() == 'application' and part.get_content_subtype() == 'pdf':
+            pdf_found = True
+            filename = part.get_filename()
+            if not filename:
+                filename = "attachment.pdf"
+
+            # Get system temp directory
+            temp_dir = tempfile.gettempdir()
+            # Construct path for 'dei' folder inside temp directory
+            dei_folder = os.path.join(temp_dir, 'dei')
+            # Create 'dei' folder if it doesn't exist
+            os.makedirs(dei_folder, exist_ok=True)
+
+            # Create a temporary file inside the 'dei' folder
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=dei_folder) as temp_pdf:
+                temp_pdf.write(part.get_payload(decode=True))
+                temp_pdf_path = temp_pdf.name
+
+            print(f"Processing attached PDF: {filename} (saved to {temp_pdf_path})", file=sys.stderr)
+            try:
+                extracted_json = extract_data_from_pdf(temp_pdf_path)
+                print(extracted_json)
+            except Exception as e:
+                print(f"Error processing PDF attachment {filename}: {e}", file=sys.stderr)
+            finally:
+                os.remove(temp_pdf_path)
+            break # Assuming only one PDF attachment is expected
+
+    if not pdf_found:
+        print("No PDF attachment found in the email.", file=sys.stderr)
         sys.exit(1)
