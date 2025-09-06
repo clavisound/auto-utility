@@ -34,24 +34,35 @@ def extract_data_from_pdf(pdf_path):
         data["startMeasurement"] = dates[0]
         data["endMeasurement"] = dates[1]
         # dates[2] is ignored
-        data["nextStartMeasurement"] = dates[3]
 
-    # duePayment
-    # Before "ΠΑΓΙΟ ΤΕΛΟΣ" is the duePayment json date. Must be the same with before "ΠΟΛΗ" date.
-    due_payment_pagio_match = re.search(r"(\d{2}/\d{2}/\d{4})\s*ΠΑΓΙΟ ΤΕΛΟΣ", one_liner_text)
-    due_payment_poli_match = re.search(r"(\d{2}/\d{2}/\d{4})\s*ΠΟΛΗ", one_liner_text)
-
-    if due_payment_pagio_match and due_payment_poli_match and \
-       due_payment_pagio_match.group(1) == due_payment_poli_match.group(1):
-        data["duePayment"] = due_payment_pagio_match.group(1)
-    elif due_payment_pagio_match:
-        data["duePayment"] = due_payment_pagio_match.group(1)
-        print("Warning: 'ΠΑΓΙΟ ΤΕΛΟΣ' date found, but 'ΠΟΛΗ' date not found or mismatched for duePayment.", file=sys.stderr)
-    elif due_payment_poli_match:
-        data["duePayment"] = due_payment_poli_match.group(1)
-        print("Warning: 'ΠΟΛΗ' date found, but 'ΠΑΓΙΟ ΤΕΛΟΣ' date not found or mismatched for duePayment.", file=sys.stderr)
+    # duePayment - New logic based on 5th and 6th date occurrences
+    due_payment_found = False
+    if len(dates) >= 6 and dates[4] == dates[5]:
+        data["duePayment"] = dates[4]
+        due_payment_found = True
+    elif len(dates) >= 6:
+        print("Warning: 5th and 6th dates found but do not match for duePayment.", file=sys.stderr)
+    elif len(dates) >= 5:
+        print("Warning: Only 5th date found, not enough dates for duePayment based on new rule.", file=sys.stderr)
     else:
-        print("Warning: Could not find consistent 'duePayment' date based on 'ΠΑΓΙΟ ΤΕΛΟΣ' and 'ΠΟΛΗ'.", file=sys.stderr)
+        print("Warning: Not enough dates to apply new duePayment rule (need at least 6).", file=sys.stderr)
+
+    # Existing duePayment logic as a fallback if not found by new rule
+    if not due_payment_found:
+        due_payment_pagio_match = re.search(r"(\d{2}/\d{2}/\d{4})\s*ΠΑΓΙΟ ΤΕΛΟΣ", one_liner_text)
+        due_payment_poli_match = re.search(r"(\d{2}/\d{2}/\d{4})\s*ΠΟΛΗ", one_liner_text)
+
+        if due_payment_pagio_match and due_payment_poli_match and \
+           due_payment_pagio_match.group(1) == due_payment_poli_match.group(1):
+            data["duePayment"] = due_payment_pagio_match.group(1)
+        elif due_payment_pagio_match:
+            data["duePayment"] = due_payment_pagio_match.group(1)
+            print("Warning: 'ΠΑΓΙΟ ΤΕΛΟΣ' date found, but 'ΠΟΛΗ' date not found or mismatched for duePayment.", file=sys.stderr)
+        elif due_payment_poli_match:
+            data["duePayment"] = due_payment_poli_match.group(1)
+            print("Warning: 'ΠΟΛΗ' date found, but 'ΠΑΓΙΟ ΤΕΛΟΣ' date not found or mismatched for duePayment.", file=sys.stderr)
+        else:
+            print("Warning: Could not find consistent 'duePayment' date based on 'ΠΑΓΙΟ ΤΕΛΟΣ' and 'ΠΟΛΗ'.", file=sys.stderr)
 
 
     # amount
