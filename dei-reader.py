@@ -54,6 +54,9 @@ if __name__ == "__main__":
     match_rf = re.search(r"(RF\d{20,})", extracted_content)
     if match_rf:
         data["RFcode"] = match_rf.group(1)
+        # 5. Αριθμός Συμβολαίου (Contract Number)
+        # Οι τελευταίοι 12 χαρακτήρες του RFcode
+        data["contractNumber"] = data["RFcode"][-12:]
 
     # 3. ΕΞΟΦΛΗΣΗ ΕΩΣ (ημερομηνία στην επόμενη γραμμή)
     # Regex: "ΕΞΟΦΛΗΣΗ ΕΩΣ" ακολουθούμενο από οτιδήποτε μέχρι την επόμενη γραμμή, και μετά την ημερομηνία
@@ -66,6 +69,8 @@ if __name__ == "__main__":
     match_next_reading = re.search(r"Επόμενη καταμέτρηση\s*\n\s*([\d./]+)", extracted_content)
     if match_next_reading:
         data["nextMeasurement"] = match_next_reading.group(1)
+
+    
 
     # Εμφάνιση των δεδομένων σε μορφή JSON
     print(json.dumps(data, ensure_ascii=False, indent=4))
