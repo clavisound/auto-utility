@@ -15,6 +15,14 @@ python3 auto-dei-py -a ACCOUNT_NUMBER
 
 --headless -q (quiet)
 
+# electricity-reader
+
+Merged dei-reader here.
+
+## options
+
+--dei --zenith
+
 # dei-reader, eyath-reader
 
 ## Reqs
