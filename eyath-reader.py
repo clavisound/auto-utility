@@ -6,6 +6,7 @@ from pypdf import PdfReader
 import email
 import os
 import tempfile
+import argparse
 
 def extract_data_from_pdf(pdf_path):
     reader = PdfReader(pdf_path)
@@ -15,8 +16,6 @@ def extract_data_from_pdf(pdf_path):
 
     # Convert to one-liner and replace newlines with tabs
     one_liner_text = text.replace('\n', '\t')
-
-    # print("One-liner text:\n", one_liner_text)
 
     data = {}
 
@@ -77,21 +76,35 @@ def extract_data_from_pdf(pdf_path):
         except ValueError:
             print(f"Warning: Could not convert '{amount_str}' to float for amount.", file=sys.stderr)
 
-    return json.dumps(data, indent=4, ensure_ascii=False)
+    # consumerNumber
+    # Format: XX-XX-XXX-XX-XX (e.g., 38-17-077-50-90)
+    consumer_number_match = re.search(r"\d{2}-\d{2}-\d{3}-\d{2}-\d{2}", one_liner_text)
+    if consumer_number_match:
+        data["consumerNumber"] = consumer_number_match.group(0)
+
+    return json.dumps(data, indent=4, ensure_ascii=False), one_liner_text
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process PDF or email to extract data.")
+    parser.add_argument("-d", "--debug", action="store_true", help="Print only the one-liner text for debugging.")
+    parser.add_argument("input_file", nargs='?', default='-', help="Path to PDF file or '-' for stdin (email).")
+    args = parser.parse_args()
+
     input_source = None
-    if len(sys.argv) < 2 or sys.argv[1] == '-':
+    if args.input_file == '-':
         # Read from stdin
         input_source = sys.stdin.buffer # Use buffer for binary read
         print("Reading email from stdin...", file=sys.stderr)
     else:
         # Read from file specified as argument
-        pdf_file_path = sys.argv[1]
+        pdf_file_path = args.input_file
         print(f"Processing PDF from file: {pdf_file_path}", file=sys.stderr)
         try:
-            extracted_json = extract_data_from_pdf(pdf_file_path)
-            print(extracted_json)
+            extracted_json, one_liner_text = extract_data_from_pdf(pdf_file_path)
+            if args.debug:
+                print(one_liner_text)
+            else:
+                print(extracted_json)
         except Exception as e:
             print(f"An error occurred while processing file {pdf_file_path}: {e}", file=sys.stderr)
             sys.exit(1)
@@ -123,8 +136,12 @@ if __name__ == "__main__":
 
             print(f"Processing attached PDF: {filename} (saved to {temp_pdf_path})", file=sys.stderr)
             try:
-                extracted_json = extract_data_from_pdf(temp_pdf_path)
-                print(extracted_json)
+                extracted_json, one_liner_text = extract_data_from_pdf(temp_pdf_path)
+                if args.debug:
+                    print(one_liner_text)
+                else:
+                    print(extracted_json)
+                    print(one_liner_text)
             except Exception as e:
                 print(f"Error processing PDF attachment {filename}: {e}", file=sys.stderr)
             finally:

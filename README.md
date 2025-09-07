@@ -15,7 +15,7 @@ python3 auto-dei-py -a ACCOUNT_NUMBER
 
 --headless -q (quiet)
 
-# dei-reader
+# dei-reader, eyath-reader
 
 ## Reqs
 
@@ -31,3 +31,13 @@ python3 dei-reader.py FILE.pdf
 - [❌] https://www.mynrg.gr/login - AUG25
 - [❌] https://myzenith.zenith.gr/user/login - AUG25
 - [❌] https://www.protergia.gr/eksuphrethsh-pelatwn/online-plirwmi-logariasmou/# - AUG25
+
+# eyath-reader
+
+## Usage
+
+python3 eyath-reader.py FILE.pdf
+
+## Options
+
+-d debug
