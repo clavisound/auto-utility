@@ -1,5 +1,7 @@
-Body mail reading is 3 times faster than pdf and it's auto deciding for the correct parser
+# Benchmarks
 
+## pdf reading
+```
 time python3 eyath-reader.py eyath/38-17-077-50-90_ΑΚΝ32848900.pdf 
 Processing PDF from file: eyath/38-17-077-50-90_ΑΚΝ32848900.pdf
 {
@@ -14,7 +16,10 @@ Processing PDF from file: eyath/38-17-077-50-90_ΑΚΝ32848900.pdf
 real    0m1,262s
 user    0m1,196s
 sys     0m0,061s
+```
 
+# Body reading and auto-deciding.
+```
 ~/git/auto-utility$ time python3 body-reader.py eyath/raw.eml 
 {
     "type": "water",
@@ -29,4 +34,4 @@ sys     0m0,061s
 real    0m0,404s
 user    0m0,348s
 sys     0m0,051s
-
+```
