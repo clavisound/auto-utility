@@ -5,6 +5,9 @@ import json
 import sys
 from email import message_from_string
 import argparse
+import requests
+
+API_ENDPOINT = "https://krg.etraq.eu/minisites/ai-utility/utility-digest.php"
 
 def parse_eyath_email(processed_content):
     data = {}
@@ -27,7 +30,7 @@ def parse_eyath_email(processed_content):
         data["RFcode"] = rf_code_match.group(1)
 
     # Amount: "Ποσό πληρωμής:"
-    amount_match = re.search(r"Ποσό πληρωμής:\s*([0-9,\.]+)", processed_content)
+    amount_match = re.search(r"Ποσό πληρωμής:\s*([0-9,.]+)", processed_content)
     if amount_match:
         data["amount"] = amount_match.group(1).replace(',', '.') # Replace comma with dot for consistency
 
@@ -51,7 +54,7 @@ def parse_dei_email(processed_content):
         data["contractNumber"] = re.sub(r'\s+', '', rf_code_match.group(1))[-12:]
 
     # Amount: "Τελικό Ποσό Πληρωμής"
-    amount_match = re.search(r"Τελικό Ποσό Πληρωμής\s*([0-9,\.]+)\s*€", processed_content)
+    amount_match = re.search(r"Τελικό Ποσό Πληρωμής\s*([0-9,.]+)\s*€", processed_content)
     if amount_match:
         data["amount"] = amount_match.group(1).replace(',', '.')
 
@@ -96,8 +99,7 @@ def main():
         processed_content = base64.b64decode(plain_text_payload).decode('utf-8').replace('>', '')
 
     if args.debug:
-        print(processed_content.replace("\n", "\t").replace("\r", "\t"))
-        sys.exit(0)
+        print("Processed Content (debug):", processed_content.replace("\n", "\t").replace("\r", "\t"))
     
     result = None
     if args.eyath:
@@ -113,7 +115,22 @@ def main():
         else:
             result = json.dumps({"error": "Could not determine email type. Use --eyath or --dei, or ensure 'eyath.gr' or 'dei.gr' is in the email content."}, ensure_ascii=False, indent=4)
     
-    print(result)
+    # Print JSON result if debug mode is on
+    if args.debug and result:
+        print("JSON Result (debug):")
+        print(result)
+
+    # Send JSON data to the API endpoint
+    if result:
+        try:
+            headers = {'Content-Type': 'application/json'}
+            response = requests.post(API_ENDPOINT, data=result.encode('utf-8'), headers=headers)
+            response.raise_for_status() # Raise an exception for HTTP errors
+            print(f"Successfully sent data to API. Response: {response.text}")
+        except requests.exceptions.RequestException as e:
+            print(f"Error sending data to API: {e}", file=sys.stderr)
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
+

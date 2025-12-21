@@ -102,6 +102,8 @@ class TestAutodei:
         downloaded_file_path = self._wait_for_download_completion(self.download_dir, timeout=60) # Αυξήθηκε το timeout
 
         if downloaded_file_path:
+            self._print_message(f"Εντοπίστηκε αρχείο PDF: {downloaded_file_path}")
+
             # 13. Μετονομασία του αρχείου σε ημερομηνία
             current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             new_filename = f"{current_date}.pdf"
@@ -113,24 +115,34 @@ class TestAutodei:
         else:
             self._print_message("Η λήψη του PDF απέτυχε ή έληξε το χρονικό όριο.")
 
-    def _wait_for_download_completion(self, download_folder, timeout=30):
+    def _wait_for_download_completion(self, download_folder, timeout=60):
         """
-        Περιμένει μέχρι να εμφανιστεί ένα αρχείο PDF στον καθορισμένο φάκελο λήψεων.
-        Επιστρέφει την πλήρη διαδρομή του αρχείου αν βρεθεί, αλλιώς None.
+        Περιμένει μέχρι να εμφανιστεί ένα αρχείο PDF στον καθορισμένο φάκελο λήψεων
+        και να ολοκληρωθεί η λήψη του (αναμονή για εξαφάνιση αρχείου .part).
+        Επιστρέφει την πλήρη διαδρομή του αρχείου αν βρεθεί και ολοκληρωθεί η λήψη, αλλιώς None.
         """
         start_time = time.time()
+        downloaded_file_path = None
+
         while time.time() - start_time < timeout:
-            # Λίστα όλων των αρχείων στον κατάλογο λήψεων
             list_of_files = glob.glob(os.path.join(download_folder, '*'))
-            # Φιλτράρισμα για αρχεία PDF
             pdf_files = [f for f in list_of_files if f.endswith('.pdf')]
 
             if pdf_files:
-                # Επιστρέφουμε το πρώτο αρχείο PDF που βρέθηκε
-                # Αν αναμένονται πολλαπλές λήψεις, ίσως χρειαστεί πιο σύνθετη λογική
-                return pdf_files[0]
-            time.sleep(1) # Ελέγχουμε κάθε δευτερόλεπτο
-        return None
+                # Assuming only one PDF download at a time
+                potential_pdf_path = pdf_files[0]
+                part_file_path = potential_pdf_path + ".part"
+
+                if not os.path.exists(part_file_path):
+                    # If .part file does not exist, download is likely complete
+                    downloaded_file_path = potential_pdf_path
+                    break
+            time.sleep(1) # Check every second for file and .part status
+
+        if downloaded_file_path:
+            # Add an extra short wait to be absolutely sure the OS has flushed
+            time.sleep(0.5)
+        return downloaded_file_path
 
 # Για να εκτελέσετε το script εκτός του pytest framework:
 if __name__ == "__main__":
