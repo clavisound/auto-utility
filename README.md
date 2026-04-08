@@ -11,6 +11,8 @@ Tested on Slackware with geckodriver-0.34
 
 python3 auto-dei-py -a ACCOUNT_NUMBER
 
+You may need to add `-s` after `python3` to exclude newer user libraries.
+
 ## Options
 
 --headless -q (quiet)
