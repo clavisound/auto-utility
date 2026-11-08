@@ -28,6 +28,8 @@ class TestAutodei:
         self._print_message(f"Οι λήψεις PDF θα αποθηκευτούν στον κατάλογο: {self.download_dir}")
 
         firefox_options = Options()
+        # block images
+        firefox_options.set_preference("permissions.default.image", 2)
         if self.headless_mode:
             firefox_options.add_argument("-headless")
             self._print_message("Εκτέλεση σε headless mode.")
@@ -102,7 +104,7 @@ class TestAutodei:
 
     def test_autodei(self, account_number, dt_filter=None, download_all=False):
         self.driver.get("https://mydei.dei.gr/el")
-        self.driver.set_window_size(650, 528)
+    #    self.driver.set_window_size(650, 528)
         time.sleep(3)
 
         # cookie banner
@@ -154,7 +156,7 @@ class TestAutodei:
                 self._print_message(f"Αποτυχία λήψης: {url}")
                 continue
             dt = self._dt_from_url(row["fileUrlView"])
-            fn = os.path.join(self.download_dir, f"bill_{dt}.pdf")
+            fn = os.path.join(self.download_dir, f"{account_number}_{dt}.pdf")
             with open(fn, "wb") as f:
                 f.write(pdf)
             self._print_message(f"Αποθηκεύτηκε: {fn} ({len(pdf)} bytes)")
